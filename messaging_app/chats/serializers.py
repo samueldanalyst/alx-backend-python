@@ -8,13 +8,21 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
 
 
+
 class MessageSerializer(serializers.ModelSerializer):
-    sender = CustomUserSerializer(read_only=True)
+    sender_name = serializers.SerializerMethodField()  # computed field
 
     class Meta:
         model = Message
-        fields = ['id', 'sender', 'conversation', 'content', 'timestamp', 'is_read']
+        fields = ['id', 'sender', 'sender_name', 'content', 'timestamp']
 
+    def get_sender_name(self, obj):
+        return f"{obj.sender.first_name} {obj.sender.last_name}"
+
+    def validate_content(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Message content cannot be empty.")
+        return value
 
 
 class ConversationSerializer(serializers.ModelSerializer):
