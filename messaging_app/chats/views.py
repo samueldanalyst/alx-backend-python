@@ -3,7 +3,7 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
-
+from rest_framework import filters
 from .models import Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer
 
@@ -34,6 +34,7 @@ class MessageViewSet(viewsets.ModelViewSet):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [filters.SearchFilter]
 
     def create(self, request, *args, **kwargs):
         """
