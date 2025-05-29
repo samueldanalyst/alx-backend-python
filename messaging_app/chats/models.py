@@ -39,6 +39,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
 
 class Conversation(models.Model):
+    conversation_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     participants = models.ManyToManyField(CustomUser, related_name='conversations')
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -47,7 +48,7 @@ class Conversation(models.Model):
     
 class Message(models.Model):
     sender = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='sent_messages')
-    conversation_id = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='messages')
+    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='messages')
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
