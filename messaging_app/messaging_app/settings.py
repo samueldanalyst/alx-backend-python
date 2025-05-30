@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'chats',
 ]
 
 MIDDLEWARE = [
@@ -133,4 +134,4 @@ REST_FRAMEWORK = {
 }
 
 
-AUTH_USER_MODEL = 'messaging_app.CustomUser'
+AUTH_USER_MODEL = 'chats.CustomUser'
