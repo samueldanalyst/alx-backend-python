@@ -1,5 +1,5 @@
 
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, filters
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -23,10 +23,16 @@ from .permissions import IsParticipantOfConversation
 
 
 
+
+
+
+
+
+
 class ConversationViewSet(viewsets.ModelViewSet):
     queryset = Conversation.objects.all()
     serializer_class = ConversationSerializer
-    permission_classes = [IsParticipantOfConversation]
+    permission_classes = [IsAuthenticated, IsParticipantOfConversation]
 
     def create(self, request, *args, **kwargs):
         participants = request.data.get('participants', [])
@@ -60,11 +66,16 @@ class ConversationViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(conversation)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+
+
 class MessageViewSet(viewsets.ModelViewSet):
-    queryset = Message.objects.all()
     serializer_class = MessageSerializer
     permission_classes = [IsAuthenticated, IsParticipantOfConversation]
     filter_backends = [filters.SearchFilter]
+
+    def get_queryset(self):
+        # ✅ Only return messages where the request.user is a participant
+        return Message.objects.filter(conversation__participants=self.request.user)
 
     def create(self, request, *args, **kwargs):
         """
@@ -76,12 +87,19 @@ class MessageViewSet(viewsets.ModelViewSet):
         content = request.data.get('content')
 
         if not conversation_id or not content:
-            return Response({"error": "Both conversation and content are required."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Both conversation and content are required."},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         try:
             conversation = Conversation.objects.get(pk=conversation_id)
         except Conversation.DoesNotExist:
-            return Response({"error": "Conversation not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Conversation not found."},
+                            status=status.HTTP_404_NOT_FOUND)
+
+        # ✅ Check if the requesting user is a participant
+        if request.user not in conversation.participants.all():
+            return Response({"detail": "You are not a participant of this conversation."},
+                            status=status.HTTP_403_FORBIDDEN)
 
         message = Message.objects.create(
             sender=request.user,
@@ -91,4 +109,3 @@ class MessageViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(message)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
