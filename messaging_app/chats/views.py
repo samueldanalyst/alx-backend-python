@@ -12,9 +12,9 @@ from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
-
-
+from .paginations import ConversationResultsSetPagination, MessageResultsSetPagination
 from .permissions import IsParticipantOfConversation
+from .filters import MessageFilter
 
 
 
@@ -33,7 +33,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
     queryset = Conversation.objects.all()
     serializer_class = ConversationSerializer
     permission_classes = [IsAuthenticated, IsParticipantOfConversation]
-
+    pagination_class = ConversationResultsSetPagination
     def create(self, request, *args, **kwargs):
         participants = request.data.get('participants', [])
         if not participants or not isinstance(participants, list):
@@ -72,6 +72,8 @@ class MessageViewSet(viewsets.ModelViewSet):
     serializer_class = MessageSerializer
     permission_classes = [IsAuthenticated, IsParticipantOfConversation]
     filter_backends = [filters.SearchFilter]
+    pagination_class = MessageResultsSetPagination
+    filterset_class = MessageFilter
 
     def get_queryset(self):
         # ✅ Only return messages where the request.user is a participant
