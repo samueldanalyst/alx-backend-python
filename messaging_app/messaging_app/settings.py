@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'chats',
+    'rest_framework_simplejwt',
 ]
 
 MIDDLEWARE = [
@@ -130,8 +131,15 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
+        'chats.auth.CustomJWTAuthentication',
     ]
 }
 
 
 AUTH_USER_MODEL = 'chats.CustomUser'
+
+LOGIN_REDIRECT_URL = '/api/'
+
+SIMPLE_JWT = {
+    'USER_ID_FIELD': 'user_id',
+}
