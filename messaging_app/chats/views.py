@@ -12,7 +12,7 @@ from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
-from .pagination import ConversationResultsSetPagination, MessageResultsSetPagination
+from .pagination import MessageResultsSetPagination
 from .permission import IsParticipantOfConversation
 from .filters import MessageFilter
 
@@ -33,7 +33,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
     queryset = Conversation.objects.all()
     serializer_class = ConversationSerializer
     permission_classes = [IsAuthenticated, IsParticipantOfConversation]
-    pagination_class = ConversationResultsSetPagination
+    
     def create(self, request, *args, **kwargs):
         participants = request.data.get('participants', [])
         if not participants or not isinstance(participants, list):
