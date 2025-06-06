@@ -14,7 +14,7 @@ from rest_framework.response import Response
 from django.contrib.auth import get_user_model
 
 
-from .permissions import IsParticipant, IsSender
+from .permissions import IsParticipantOfConversation
 
 
 
@@ -26,7 +26,7 @@ from .permissions import IsParticipant, IsSender
 class ConversationViewSet(viewsets.ModelViewSet):
     queryset = Conversation.objects.all()
     serializer_class = ConversationSerializer
-    permission_classes = [IsAuthenticated, IsParticipant]
+    permission_classes = [IsParticipantOfConversation]
 
     def create(self, request, *args, **kwargs):
         participants = request.data.get('participants', [])
@@ -63,7 +63,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
 class MessageViewSet(viewsets.ModelViewSet):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
-    permission_classes = [IsAuthenticated, IsSender]
+    permission_classes = [IsAuthenticated, IsParticipantOfConversation]
     filter_backends = [filters.SearchFilter]
 
     def create(self, request, *args, **kwargs):
