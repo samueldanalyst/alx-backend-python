@@ -95,3 +95,29 @@ class OffensiveLanguageMiddleware:
             ip = request.META.get('REMOTE_ADDR')
         return ip
 
+
+
+
+class RolePermissionMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # Optional: define paths you want to protect
+        protected_paths = ['/api/conversations/', '/api/messages/']  # Adjust as needed
+
+        # Only check for protected paths and authenticated users
+        if any(request.path.startswith(path) for path in protected_paths):
+            user = request.user
+            if not user.is_authenticated:
+                return JsonResponse({'error': 'Authentication required.'}, status=401)
+
+            # Check user's role (assuming 'role' is a field on the user model)
+            user_role = getattr(user, 'role', None)
+
+            if user_role not in ['admin', 'moderator']:
+                return JsonResponse({'error': 'Forbidden: insufficient permissions.'}, status=403)
+
+        response = self.get_response(request)
+        return response
+
