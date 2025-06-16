@@ -74,6 +74,7 @@ class Message(models.Model):
     message_body = models.TextField()
     sent_at = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
+    edited = models.BooleanField(default=False)
 
     def __str__(self):
         return f"From {self.sender} to {self.receiver} at {self.sent_at}"
