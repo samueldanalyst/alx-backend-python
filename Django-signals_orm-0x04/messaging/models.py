@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from django.db import models
+from django.utils import timezone
 
 # chats/models.py
 import uuid
@@ -75,6 +75,15 @@ class Message(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
     edited = models.BooleanField(default=False)
+
+    edited_at = models.DateTimeField(null=True, blank=True)
+    edited_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='message_edits'
+    )
 
     def __str__(self):
         return f"From {self.sender} to {self.receiver} at {self.timestamp}"
