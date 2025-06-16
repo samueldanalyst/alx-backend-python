@@ -121,7 +121,7 @@ class RolepermissionMiddleware:
             
             # Check role
             user_role = getattr(request.user, 'role', None)
-            if user_role not in ['admin', 'moderator']:
+            if user_role not in ['admin', 'user']:
                 return JsonResponse({'error': 'Forbidden: insufficient permissions.'}, status=403)
 
         return self.get_response(request)
