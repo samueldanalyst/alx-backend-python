@@ -6,6 +6,8 @@ import logging
 from datetime import datetime
 from datetime import time
 from django.http import JsonResponse
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
 
 logger = logging.getLogger(__name__)
 file_handler = logging.FileHandler('requests.log')
@@ -98,26 +100,29 @@ class OffensiveLanguageMiddleware:
 
 
 
+
+
 class RolepermissionMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
+        self.jwt_authenticator = JWTAuthentication()
 
     def __call__(self, request):
-        # Optional: define paths you want to protect
-        protected_paths = ['/api/conversations/', '/api/messages/']  # Adjust as needed
-
-        # Only check for protected paths and authenticated users
+        protected_paths = ['/api/conversations/', '/api/messages/']
         if any(request.path.startswith(path) for path in protected_paths):
-            user = request.user
-            if not user.is_authenticated:
-                return JsonResponse({'error': 'Authentication required.'}, status=401)
-
-            # Check user's role (assuming 'role' is a field on the user model)
-            user_role = getattr(user, 'role', None)
-
+            # Try to authenticate JWT manually
+            try:
+                auth_result = self.jwt_authenticator.authenticate(request)
+                if auth_result is None:
+                    return JsonResponse({'error': 'Authentication required.'}, status=401)
+                request.user, _ = auth_result
+            except Exception as e:
+                return JsonResponse({'error': 'Authentication failed.'}, status=401)
+            
+            # Check role
+            user_role = getattr(request.user, 'role', None)
             if user_role not in ['admin', 'moderator']:
                 return JsonResponse({'error': 'Forbidden: insufficient permissions.'}, status=403)
 
-        response = self.get_response(request)
-        return response
+        return self.get_response(request)
 
