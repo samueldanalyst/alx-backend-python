@@ -16,7 +16,7 @@ def create_notification_on_new_message(sender, instance, created, **kwargs):
 @receiver(pre_save, sender=Message)
 def log_message_edit(sender, instance, **kwargs):
     if not instance.pk:
-        return  # Skip for new messages
+        return  # Skip new messages (they don’t have an old version yet)
 
     try:
         old_instance = Message.objects.get(pk=instance.pk)
@@ -24,8 +24,10 @@ def log_message_edit(sender, instance, **kwargs):
         return
 
     if old_instance.content != instance.content:
+        # ✅ Log the previous version
         MessageHistory.objects.create(
             message=old_instance,
             content=old_instance.content,
         )
-        instance.edited = True
+        # ✅ Flag the message as edited
+        instance.edited = True  # This will be saved when the message is saved
