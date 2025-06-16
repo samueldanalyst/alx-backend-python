@@ -1,0 +1,43 @@
+{
+	"info": {
+		"_postman_id": "b7ae599a-365f-4599-a2fa-90f155d36469",
+		"name": "post_man-Collections",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "44856134",
+		"_collection_link": "https://samuelokon-5231234.postman.co/workspace/Samuel-Okon's-Workspace~8ab92b32-fd6a-47bf-87c5-00e1e5799ebc/collection/44856134-b7ae599a-365f-4599-a2fa-90f155d36469?action=share&source=collection_link&creator=44856134"
+	},
+	"item": [
+		{
+			"name": "login",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "consersations",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "messages",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "unauthorizedaccess",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		}
+	]
+}
