@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'chats',
+    'messaging',
     "rest_framework_simplejwt",
     'django_filters',
 ]
@@ -50,11 +50,11 @@ MIDDLEWARE = [
     #'chats.middleware.RestrictAccessByTimeMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'chats.middleware.RolepermissionMiddleware',
-    'chats.middleware.OffensiveLanguageMiddleware',
+    'messaging.middleware.RolepermissionMiddleware',
+    'messaging.middleware.OffensiveLanguageMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'chats.middleware.RequestLoggingMiddleware',
+    'messaging.middleware.RequestLoggingMiddleware',
 ]
 
 ROOT_URLCONF = 'Django_Middleware_0x03.urls'
@@ -136,7 +136,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
-        'chats.auth.CustomJWTAuthentication',
+        'messaging.auth.CustomJWTAuthentication',
     ],
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     
@@ -145,7 +145,7 @@ REST_FRAMEWORK = {
 }
 
 
-AUTH_USER_MODEL = 'chats.CustomUser'
+AUTH_USER_MODEL = 'messaging.CustomUser'
 
 LOGIN_REDIRECT_URL = '/api/'
 

@@ -1,6 +1,5 @@
 from django.db import models
 from django.conf import settings
-from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 # chats/models.py
@@ -32,6 +31,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         ('moderator', 'Moderator'),
         ('user', 'User'),
     )
+    
 
     user_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True)
@@ -46,6 +46,12 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
+
+    def save(self, *args, **kwargs):
+        self.email = self.__class__.objects.normalize_email(self.email)
+        if not self.pk or not self.password.startswith('pbkdf2_'):
+            self.set_password(self.password)
+        super().save(*args, **kwargs)
 
     @property
     def id(self):
