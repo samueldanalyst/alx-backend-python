@@ -134,8 +134,10 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        #'rest_framework.authentication.SessionAuthentication',
+        #'rest_framework.authentication.BasicAuthentication',
+        # for blocking anonymous users
         'messaging.auth.CustomJWTAuthentication',
     ],
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
@@ -149,6 +151,15 @@ AUTH_USER_MODEL = 'messaging.CustomUser'
 
 LOGIN_REDIRECT_URL = '/api/'
 
+
+
+from datetime import timedelta
+
 SIMPLE_JWT = {
-    'USER_ID_FIELD': 'user_id',
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': False,
+    'USER_ID_FIELD': 'user_id',  # Use 'id' or your actual user model field
+    'USER_ID_CLAIM': 'user_id',
 }

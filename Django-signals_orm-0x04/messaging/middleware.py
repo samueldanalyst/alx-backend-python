@@ -4,7 +4,7 @@ from datetime import datetime, time
 from django.http import HttpResponseForbidden
 import logging
 from datetime import datetime
-from datetime import time
+import time
 from django.http import JsonResponse
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
@@ -101,14 +101,15 @@ class OffensiveLanguageMiddleware:
 
 
 
-
+# this middleware can be used for admin login page 
+# but we can also handle this in the view creating a custom auth
 class RolepermissionMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
         self.jwt_authenticator = JWTAuthentication()
 
     def __call__(self, request):
-        protected_paths = ['/api/conversations/', '/api/messages/']
+        protected_paths = ['/api/conversations/', '/api/messages/', 'api/conversations/conversations_id/messages/']
         if any(request.path.startswith(path) for path in protected_paths):
             # Try to authenticate JWT manually
             try:

@@ -79,6 +79,30 @@ class MessageViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         # ✅ Only return messages where the request.user is a participant
         return Message.objects.filter(conversation__participants=self.request.user)
+    
+    def update(self, request, *args, **kwargs):
+        """
+        Edit a message.
+        Only the sender of the message can edit it.
+        The 'content' field must be provided.
+        """
+        message = self.get_object()
+
+        # ✅ Ensure only the sender can edit
+        if message.sender != request.user:
+            return Response({"detail": "You can only edit your own messages."},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        new_content = request.data.get("content")
+        if not new_content:
+            return Response({"error": "Content is required."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        message.content = new_content
+        message.save()  # ✅ This triggers the pre_save signal to log history
+        serializer = self.get_serializer(message)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
 
     def create(self, request, *args, **kwargs):
         """
@@ -99,16 +123,25 @@ class MessageViewSet(viewsets.ModelViewSet):
             return Response({"error": "Conversation not found."},
                             status=status.HTTP_404_NOT_FOUND)
 
-        # ✅ Check if the requesting user is a participant
-        if request.user not in conversation.participants.all():
-            return Response({"detail": "You are not a participant of this conversation."},
-                            status=status.HTTP_403_FORBIDDEN)
+        
+        # ✅ Automatically find the receiver from participants
+        participants = conversation.participants.all()
+        receiver = [user for user in participants if user != request.user]
+        receiver = receiver[0] if receiver else None  # Fallback to avoid index error
 
+        if not receiver:
+            return Response({"error": "Receiver could not be determined."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # ✅ Now create message with receiver set
         message = Message.objects.create(
             sender=request.user,
+            receiver=receiver,
             conversation=conversation,
             content=content
         )
 
         serializer = self.get_serializer(message)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+    
