@@ -1,6 +1,6 @@
 # chats/urls.py
 from rest_framework_nested.routers import DefaultRouter, NestedDefaultRouter
-from .views import ConversationViewSet, MessageViewSet
+from .views import ConversationViewSet, MessageViewSet, delete_user
 from django.urls import path, include
 
 # Base router for conversations
@@ -14,4 +14,5 @@ conversations_router.register(r'messages', MessageViewSet, basename='conversatio
 urlpatterns = [
     path('', include(router.urls)),
     path('', include(conversations_router.urls)),
+    path('delete-account/', delete_user, name='delete_user'),
 ]

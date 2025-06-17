@@ -81,7 +81,7 @@ class Message(models.Model):
         settings.AUTH_USER_MODEL,
         null=True,
         blank=True,
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         related_name='message_edits'
     )
 
@@ -92,6 +92,13 @@ class MessageHistory(models.Model):
     message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='history')
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)  # Time when the message was changed
+    edited_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name='messages_edited'
+    )
 
     def __str__(self):
         return f"Edit of message {self.message.message_id} at {self.timestamp}"

@@ -15,6 +15,8 @@ from django.contrib.auth import get_user_model
 from .pagination import MessageResultsSetPagination
 from .permission import IsParticipantOfConversation
 from .filters import MessageFilter
+from django.contrib.auth import get_user_model
+from rest_framework.decorators import api_view, permission_classes
 
 
 
@@ -22,8 +24,12 @@ from .filters import MessageFilter
 
 
 
-
-
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_user(request):
+    user = request.user
+    user.delete()
+    return Response({"detail": "User account and related data deleted."}, status=status.HTTP_204_NO_CONTENT)
 
 
 
@@ -34,6 +40,15 @@ class ConversationViewSet(viewsets.ModelViewSet):
     serializer_class = ConversationSerializer
     permission_classes = [IsAuthenticated, IsParticipantOfConversation]
 
+    def get_queryset(self):
+        # ✅ Return only conversations the user is part of
+        return Conversation.objects.filter(participants=self.request.user)
+
+    def get_object(self):
+        # ✅ This ensures object-level permissions are always checked
+        obj = super().get_object()
+        self.check_object_permissions(self.request, obj)
+        return obj
     
     def create(self, request, *args, **kwargs):
         participants = request.data.get('participants', [])
