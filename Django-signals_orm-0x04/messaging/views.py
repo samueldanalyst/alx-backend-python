@@ -21,7 +21,13 @@ from rest_framework.decorators import api_view, permission_classes
 
 
 
-
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def unread_messages(request):
+    user = request.user
+    unread_qs = Message.unread.for_user(user)
+    serializer = MessageSerializer(unread_qs, many=True)
+    return Response(serializer.data)
 
 
 @api_view(['DELETE'])

@@ -6,7 +6,11 @@ from django.utils import timezone
 import uuid
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.db import models
+from django.contrib.auth import get_user_model
 
+
+
+    
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -57,6 +61,12 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def id(self):
         return self.user_id
 
+
+class UnreadMessagesManager(models.Manager):
+    def for_user(self, user):
+        return self.get_queryset().filter(receiver=user, read=False).only(
+            'message_id', 'sender', 'content', 'timestamp'
+        )
     
 class Conversation(models.Model):
     conversation_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -73,8 +83,10 @@ class Message(models.Model):
     conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='messages')
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
-    is_read = models.BooleanField(default=False)
+    read = models.BooleanField(default=False)
     edited = models.BooleanField(default=False)
+
+
 
     edited_at = models.DateTimeField(null=True, blank=True)
     edited_by = models.ForeignKey(
@@ -95,8 +107,11 @@ class Message(models.Model):
         on_delete=models.CASCADE
     )
 
+    objects = models.Manager()  # Default manager
+    unread = UnreadMessagesManager()  # ✅ Custom manager
+
     def __str__(self):
-        return f"From {self.sender} to {self.receiver} at {self.timestamp}"
+        return f"From {self.sender} to {self.receiver} at {self.content[:30]}"
     
 class MessageHistory(models.Model):
     message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='history')

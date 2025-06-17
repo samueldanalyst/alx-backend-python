@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import CustomUser, Message, Conversation
 
+
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
@@ -12,6 +13,7 @@ class RecursiveMessageSerializer(serializers.ModelSerializer):
     receiver_name = serializers.SerializerMethodField()
     receiver = serializers.UUIDField(source='receiver.user_id', read_only=True)
     replies = serializers.SerializerMethodField()
+    read = serializers.BooleanField(read_only=True)  # ✅ Show if message is read
 
     class Meta:
         model = Message
@@ -23,6 +25,7 @@ class RecursiveMessageSerializer(serializers.ModelSerializer):
             'receiver_name',
             'content',
             'timestamp',
+            'read',
             'parent_message',
             'replies',
         ]
@@ -50,6 +53,7 @@ class MessageSerializer(serializers.ModelSerializer):
         allow_null=True
     )
     replies = serializers.SerializerMethodField()
+    read = serializers.BooleanField(read_only=True)  # ✅ Include read status
 
     class Meta:
         model = Message
@@ -61,6 +65,7 @@ class MessageSerializer(serializers.ModelSerializer):
             'receiver_name',
             'content',
             'timestamp',
+            'read',
             'parent_message',
             'replies',
         ]

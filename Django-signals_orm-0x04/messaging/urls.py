@@ -2,6 +2,7 @@
 from rest_framework_nested.routers import DefaultRouter, NestedDefaultRouter
 from .views import ConversationViewSet, MessageViewSet, delete_user
 from django.urls import path, include
+from .views import unread_messages
 
 # Base router for conversations
 router = DefaultRouter()
@@ -17,4 +18,5 @@ urlpatterns = [
     path('', include(router.urls)),
     path('', include(conversations_router.urls)),
     path('delete-account/', delete_user, name='delete_user'),
+    path('inbox/unread/', unread_messages, name='unread-messages'),
 ]
