@@ -85,6 +85,16 @@ class Message(models.Model):
         related_name='message_edits'
     )
 
+
+     # NEW FIELD for threaded replies
+    parent_message = models.ForeignKey(
+        'self',
+        null=True,
+        blank=True,
+        related_name='replies',
+        on_delete=models.CASCADE
+    )
+
     def __str__(self):
         return f"From {self.sender} to {self.receiver} at {self.timestamp}"
     

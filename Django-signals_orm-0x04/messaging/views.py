@@ -7,7 +7,7 @@ from rest_framework import filters
 from .models import Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer
 
-
+from django.db.models import Prefetch
 from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -45,42 +45,90 @@ class ConversationViewSet(viewsets.ModelViewSet):
         return Conversation.objects.filter(participants=self.request.user)
 
     def get_object(self):
-        # ✅ This ensures object-level permissions are always checked
+        # ✅ Ensure object-level permissions are checked
         obj = super().get_object()
         self.check_object_permissions(self.request, obj)
         return obj
-    
-    def create(self, request, *args, **kwargs):
-        participants = request.data.get('participants', [])
-        if not participants or not isinstance(participants, list):
-            return Response({"error": "Participants list is required."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Add requesting user if not included
-        user_id = request.user.user_id
-        if user_id not in participants:
-            participants.append(user_id)
+    def retrieve(self, request, *args, **kwargs):
+        conversation_id = kwargs.get('pk')
 
-        # Validate that all participants exist
-        User = get_user_model()
-        valid_users = User.objects.filter(user_id__in=participants).values_list('user_id', flat=True)
-        if set(participants) != set(valid_users):
-            return Response({"error": "One or more participant IDs are invalid."}, status=status.HTTP_400_BAD_REQUEST)
+        # ✅ Optimize query with select_related and prefetch_related for replies
+        try:
+            conversation = Conversation.objects.prefetch_related(
+                Prefetch(
+                    'messages',
+                    queryset=Message.objects.filter(parent_message__isnull=True)  # Top-level messages only
+                        .select_related('sender', 'receiver', 'parent_message')
+                        .prefetch_related('replies')  # replies = related_name in Message model
+                )
+            ).get(pk=conversation_id)
+        except Conversation.DoesNotExist:
+            return Response({'error': 'Conversation not found.'}, status=status.HTTP_404_NOT_FOUND)
 
-        # Check if conversation with same participants already exists
-        existing_conversations = Conversation.objects.all()
-        for conv in existing_conversations:
-            conv_participants = set(conv.participants.values_list('user_id', flat=True))
-            if conv_participants == set(participants):
-                serializer = self.get_serializer(conv)
-                return Response(serializer.data, status=status.HTTP_200_OK)
-
-        # Create new conversation
-        conversation = Conversation.objects.create()
-        conversation.participants.set(participants)
-        conversation.save()
-
+        self.check_object_permissions(request, conversation)
         serializer = self.get_serializer(conversation)
+        return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        """
+        Send a message to an existing conversation.
+        Supports replying to a specific message using 'parent_message'.
+        Requires 'conversation' and 'content' in request data.
+        """
+        conversation_id = request.data.get('conversation')
+        content = request.data.get('content')
+        parent_message_id = request.data.get('parent_message')  # Optional for replies
+
+        if not conversation_id or not content:
+            return Response({"error": "Both conversation and content are required."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            conversation = Conversation.objects.get(pk=conversation_id)
+        except Conversation.DoesNotExist:
+            return Response({"error": "Conversation not found."},
+                            status=status.HTTP_404_NOT_FOUND)
+
+        # Ensure sender is a participant
+        if request.user not in conversation.participants.all():
+            return Response({"error": "You are not a participant in this conversation."},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        # Automatically find the receiver
+        participants = conversation.participants.exclude(user_id=request.user.user_id)
+        receiver = participants.first() if participants.exists() else None
+
+        if not receiver:
+            return Response({"error": "Receiver could not be determined."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # Handle parent_message if it's a reply
+        parent_message = None
+        if parent_message_id:
+            try:
+                parent_message = Message.objects.get(message_id=parent_message_id)
+            except Message.DoesNotExist:
+                return Response({"error": "Parent message not found."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            # Optional: Ensure parent_message belongs to same conversation
+            if parent_message.conversation_id != conversation_id:
+                return Response({"error": "Parent message does not belong to this conversation."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+        # Create the message
+        message = Message.objects.create(
+            sender=request.user,
+            receiver=receiver,
+            conversation=conversation,
+            content=content,
+            parent_message=parent_message  # Can be None
+        )
+
+        serializer = self.get_serializer(message)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
 
 
@@ -127,6 +175,7 @@ class MessageViewSet(viewsets.ModelViewSet):
         """
         conversation_id = request.data.get('conversation')
         content = request.data.get('content')
+        parent_message_id = request.data.get('parent_message')
 
         if not conversation_id or not content:
             return Response({"error": "Both conversation and content are required."},
@@ -149,12 +198,23 @@ class MessageViewSet(viewsets.ModelViewSet):
                             status=status.HTTP_400_BAD_REQUEST)
 
         # ✅ Now create message with receiver set
-        message = Message.objects.create(
+        parent_message = None
+        if parent_message_id:
+            try:
+                parent_message = Message.objects.get(pk=parent_message_id)
+            except Message.DoesNotExist:
+                return Response({"error": "Parent message not found."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+        # ✅ Create the message with parent_message
+            message = Message.objects.create(
             sender=request.user,
             receiver=receiver,
             conversation=conversation,
-            content=content
+            content=content,
+            parent_message=parent_message  # ✅ INCLUDE THIS
         )
+
 
         serializer = self.get_serializer(message)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
