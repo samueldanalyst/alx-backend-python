@@ -25,7 +25,7 @@ from rest_framework.decorators import api_view, permission_classes
 @permission_classes([IsAuthenticated])
 def unread_messages(request):
     user = request.user
-    unread_qs = Message.unread.for_user(user)
+    unread_qs = Message.unread.unread_for_user(user)
     serializer = MessageSerializer(unread_qs, many=True)
     return Response(serializer.data)
 
