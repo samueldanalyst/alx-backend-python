@@ -7,6 +7,35 @@ class CustomUserSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['user_id', 'email', 'first_name', 'last_name', 'phone_number']
 
+class UnreadMessageSerializer(serializers.ModelSerializer):
+    sender_name = serializers.SerializerMethodField()
+    receiver_name = serializers.SerializerMethodField()
+    receiver = serializers.UUIDField(source='receiver.user_id', read_only=True)
+
+    class Meta:
+        model = Message
+        fields = [
+            'message_id',
+            'sender',
+            'sender_name',
+            'receiver',
+            'receiver_name',
+            'content',
+            'timestamp',
+            'read',
+            'parent_message',
+        ]
+
+    
+
+    def get_sender_name(self, obj):
+        return f"{obj.sender.first_name} {obj.sender.last_name}"
+
+    def get_receiver_name(self, obj):
+        if obj.receiver:
+            return f"{obj.receiver.first_name} {obj.receiver.last_name}"
+        return None
+
 
 class RecursiveMessageSerializer(serializers.ModelSerializer):
     sender_name = serializers.SerializerMethodField()

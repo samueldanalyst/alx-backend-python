@@ -5,7 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import filters
 from .models import Conversation, Message
-from .serializers import ConversationSerializer, MessageSerializer
+from .serializers import ConversationSerializer, MessageSerializer,UnreadMessageSerializer
 
 from django.db.models import Prefetch
 from rest_framework import status, viewsets
@@ -25,8 +25,17 @@ from rest_framework.decorators import api_view, permission_classes
 @permission_classes([IsAuthenticated])
 def unread_messages(request):
     user = request.user
-    unread_qs = Message.unread.unread_for_user(user)
-    serializer = MessageSerializer(unread_qs, many=True)
+    unread_qs = Message.unread.unread_for_user(user).only(
+        'message_id',
+        'sender',
+        'receiver',
+        'content',
+        'timestamp',
+        'read',
+        'parent_message'
+    ).select_related("sender", "receiver")  # Optimizes joins
+
+    serializer = UnreadMessageSerializer(unread_qs, many=True)
     return Response(serializer.data)
 
 
