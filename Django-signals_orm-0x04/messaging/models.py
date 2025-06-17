@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
-
+from .managers import UnreadMessagesManager
 # chats/models.py
 import uuid
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
@@ -62,11 +62,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         return self.user_id
 
 
-class UnreadMessagesManager(models.Manager):
-    def for_user(self, user):
-        return self.get_queryset().filter(receiver=user, read=False).only(
-            'message_id', 'sender', 'content', 'timestamp'
-        )
+
     
 class Conversation(models.Model):
     conversation_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
