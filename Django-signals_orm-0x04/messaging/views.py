@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import filters
 from .models import Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer,UnreadMessageSerializer
-
+from django.views.decorators.cache import cache_page
 from django.db.models import Prefetch
 from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
@@ -17,8 +17,7 @@ from .permission import IsParticipantOfConversation
 from .filters import MessageFilter
 from django.contrib.auth import get_user_model
 from rest_framework.decorators import api_view, permission_classes
-
-
+from django.utils.decorators import method_decorator
 
 
 @api_view(['GET'])
@@ -49,7 +48,7 @@ def delete_user(request):
 
 
 
-
+@method_decorator(cache_page(60), name='retrieve')
 class ConversationViewSet(viewsets.ModelViewSet):
     queryset = Conversation.objects.all()
     serializer_class = ConversationSerializer
@@ -143,7 +142,6 @@ class ConversationViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(message)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
 
 
 
