@@ -84,7 +84,7 @@ DATABASES = {
         'NAME': os.getenv('MYSQL_DB'),
         'USER': os.getenv('MYSQL_USER'),
         'PASSWORD': os.getenv('MYSQL_PASSWORD'),
-        'HOST': 'db',  # this is the Docker service name!
+        'HOST': 'messaging_db',       # this is the Docker service name!
         'PORT': '3306',
     }
 }
