@@ -21,4 +21,4 @@ COPY . /app/
 EXPOSE 8000
 
 # Run the server
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["./wait-for-it.sh", "db:3306", "--timeout=30", "--", "python", "manage.py", "runserver", "0.0.0.0:8000"]
