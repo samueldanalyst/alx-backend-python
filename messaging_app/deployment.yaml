@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: messaging-app-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: messaging-app
+  template:
+    metadata:
+      labels:
+        app: messaging-app
+    spec:
+      containers:
+      - name: messaging-app
+        image: flameloaded/messaging-app:latest
+        command: ["./wait-for-it.sh"]
+        args: ["messaging-db:3306", "--timeout=30", "--", "python", "manage.py", "runserver", "0.0.0.0:8000"]
+        ports:
+          - containerPort: 8000
+        env:
+          - name: DEBUG
+            value: "1"
+          - name: DB_HOST
+            value: messaging-db
+          - name: DB_NAME
+            value: messaging
+          - name: DB_USER
+            value: user
+          - name: DB_PASSWORD
+            value: password
